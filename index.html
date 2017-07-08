@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+    <title>Steemit - Stats</title>
+
+    <meta name="description" content="Steemit simple account info"/>
+    <meta name="keywords" content="steemit, voting power, stats"/>
+
+    <link rel="stylesheet" type="text/css" href="./main.css">
+
+    <!--[if lt IE 9]>
+    <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="error">Connection error</div>
+
+    <div id="account-container"></div>
+    <script id="account-template" type="text/x-handlebars-template">
+      <h1>@{{name}} ({{voting_power}}%)</h1>
+    </script>
+
+    <form id="tag-form">
+      <input type="text" id="tag-input" />
+      <button id="add-tag">Add</button>
+    </form>
+    <div class="tags" id="tags-container"></div>
+
+    <script id="tag-template" type="text/x-handlebars-template">
+      <div class="tag-button">
+        <a class="tag-link" href="#{{tag}}">{{tag}}</a>
+        <span class="remove" data-tag="{{tag}}">&times;</span>
+      </div>
+    </script>
+
+    <div id="feed-container"></div>
+    <script id="feed-template" type="text/x-handlebars-template">
+      <div class="feed">
+        <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank">{{title}}</a></h3>
+        <div class="stats">{{created}} &middot; {{net_votes}} votes &middot; ${{pending_payout_value}}</div>
+        <div class="body">{{body}}</div>
+      </div>
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.10/handlebars.min.js" integrity="sha256-0JaDbGZRXlzkFbV8Xi8ZhH/zZ6QQM0Y3dCkYZ7JYq34=" crossorigin="anonymous"></script>
+    <script src="./steem.min.js"></script>
+    <script src="./moment.min.js"></script>
+    <script src="./tag-storage.js"></script>
+    <script>
+      var $errors = $('.error');
+
+      // MARK: - Account info
+      steem.api.getAccounts(['tabris'], function(error, res){
+        if (error) {
+          $errors.fadeIn();
+          console.log(error);
+        } else {
+          $errors.fadeOut();
+          var account = res[0];
+          console.log(account);
+
+          account.voting_power = account.voting_power / 100;
+          var template = Handlebars.compile($('#account-template').html());
+          $('#account-container').html(template(account));
+        }
+      });
+
+
+      // MARK: - Latest feed
+
+      window.FeedFilter = (function() {
+        var $feedContainer = $('#feed-container');
+        var feedTemplate = Handlebars.compile($('#feed-template').html());
+
+        var isUnderValued = function(discussion) {
+          var pendingPayoutValue = parseFloat(discussion.pending_payout_value);
+          var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
+
+          return diffTimeInMinutes > 15 &&
+            discussion.net_votes < 5 && pendingPayoutValue < 5 &&
+            discussion.body.length > 1000;
+        };
+
+        return {
+          fetch: function(tag) {
+            $feedContainer.empty();
+            steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': 20 }, function(err, result) {
+              if (err === null) {
+                var len = result.length;
+                for (i = 0; i < len; i++) {
+                  var discussion = result[i];
+                  console.log(i, discussion);
+
+                  discussion.created = discussion.created + '+00:00';
+                  if (isUnderValued(discussion)) {
+                    discussion.created = moment(discussion.created).fromNow();
+                    $feedContainer.append(feedTemplate(discussion));
+                  }
+                }
+              } else {
+                  console.log(err);
+              }
+            });
+          }
+        };
+      })();
+      FeedFilter.fetch(TagStorage.getAll()[0] || 'kr');
+
+
+      // MARK: - Tag settings
+
+      window.TagForm = (function() {
+        var $tagsContainer = $('#tags-container');
+        var $tagInput = $('#tag-input');
+        var tagTemplate = Handlebars.compile($('#tag-template').html());
+
+        var refreshTags = function() {
+          var html = '';
+          var tags = TagStorage.getAll();
+          for(var i in tags) {
+            html += tagTemplate({ tag: tags[i] });
+          }
+          $tagsContainer.html(html);
+        }
+
+        return {
+          bind: function() {
+            refreshTags();
+            $('#tag-form').submit(function() {
+              var tag = $tagInput.val().toLowerCase().replace(/[^a-z-]/g, '');
+              if (tag) {
+                TagStorage.add(tag);
+                refreshTags();
+              }
+              $tagInput.val('');
+
+              return false;
+            });
+
+            $('#tags-container').on('click', '.remove', function() {
+              TagStorage.remove($(this).data('tag'));
+              refreshTags();
+            });
+
+            $(window).bind( 'hashchange', function(e) {
+              var tag = window.location.hash.substr(1);
+              $tagInput
+              FeedFilter.fetch(tag);
+            });
+          }
+        }
+      })();
+      TagForm.bind();
+    </script>
+  </body>
+</html>
+
