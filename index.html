@@ -21,7 +21,7 @@
 
     <div id="account-container"></div>
     <script id="account-template" type="text/x-handlebars-template">
-      <h1>@{{name}} ({{voting_power}}%)</h1>
+      <h1><a href="https://steemit.com/@{{name}}" target="_blank">@{{name}}</a> ({{voting_power}}%)</h1>
     </script>
 
     <form id="tag-form">
@@ -31,12 +31,13 @@
     <div class="tags" id="tags-container"></div>
 
     <script id="tag-template" type="text/x-handlebars-template">
-      <div class="tag-button">
+      <div class="tag-button" data-tag="{{tag}}">
         <a class="tag-link" href="#{{tag}}">{{tag}}</a>
         <span class="remove" data-tag="{{tag}}">&times;</span>
       </div>
     </script>
 
+    <div class="grey">Fetched <span id="feed-count">0</span> articles</div>
     <div id="feed-container"></div>
     <script id="feed-template" type="text/x-handlebars-template">
       <div class="feed">
@@ -74,6 +75,7 @@
       // MARK: - Latest feed
 
       window.FeedFilter = (function() {
+        var $feedCount = $('#feed-count');
         var $feedContainer = $('#feed-container');
         var feedTemplate = Handlebars.compile($('#feed-template').html());
 
@@ -86,30 +88,44 @@
             discussion.body.length > 1000;
         };
 
+        var fetchNext = function(tag, lastPermlink, lastAuthor) {
+          steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': 20, "start_permlink": lastPermlink, "start_author": lastAuthor }, function(err, result) {
+            if (err === null) {
+              var len = result.length;
+              for (i = 0; i < len; i++) {
+                var discussion = result[i];
+                // console.log(i, discussion);
+
+                discussion.created = discussion.created + '+00:00';
+                if (isUnderValued(discussion)) {
+                  discussion.created = moment(discussion.created).fromNow();
+                  $feedContainer.append(feedTemplate(discussion));
+                }
+
+                if (i == len - 1) {
+                  lastPermlink = discussion.permlink;
+                  lastAuthor = discussion.author;
+                }
+              }
+
+              var totalCount = $feedContainer.find('.feed').length;
+              $feedCount.text(totalCount);
+              if (totalCount < 10) {
+                fetchNext(tag, lastPermlink, lastAuthor)
+              }
+            } else {
+                console.log(err);
+            }
+          });
+        };
+
         return {
           fetch: function(tag) {
             $feedContainer.empty();
-            steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': 20 }, function(err, result) {
-              if (err === null) {
-                var len = result.length;
-                for (i = 0; i < len; i++) {
-                  var discussion = result[i];
-                  console.log(i, discussion);
-
-                  discussion.created = discussion.created + '+00:00';
-                  if (isUnderValued(discussion)) {
-                    discussion.created = moment(discussion.created).fromNow();
-                    $feedContainer.append(feedTemplate(discussion));
-                  }
-                }
-              } else {
-                  console.log(err);
-              }
-            });
+            fetchNext(tag);
           }
         };
       })();
-      FeedFilter.fetch(TagStorage.getAll()[0] || 'kr');
 
 
       // MARK: - Tag settings
@@ -149,13 +165,26 @@
 
             $(window).bind( 'hashchange', function(e) {
               var tag = window.location.hash.substr(1);
-              $tagInput
               FeedFilter.fetch(tag);
+              TagForm.highlight(tag);
             });
+          },
+
+          checkCurrentAnchor: function() {
+            var tag = window.location.hash.substr(1);
+            FeedFilter.fetch(tag);
+            TagForm.highlight(tag);
+          },
+
+          highlight: function(tag) {
+            $('.tag-button').removeClass('active');
+            $('.tag-button[data-tag="' + tag + '"]').addClass('active');
           }
         }
       })();
+
       TagForm.bind();
+      TagForm.checkCurrentAnchor();
     </script>
   </body>
 </html>

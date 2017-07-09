@@ -17,25 +17,23 @@ a {
 }
 
 .grey {
-  color: #ddd;
+  color: #aaa;
 }
-
-
 
 .feed {
   margin: 30px 0;
 }
 
-.feed h5 {
+.feed h3 {
   margin: 0;
 }
 
 .feed .stats {
-  margin: 10px 0;
+  margin: 5px 0 10px 0;
 }
 
 .feed .body {
-  height: 28px;
+  height: 33px;
   font-size: 13px;
   overflow: hidden;
   color: #aaa;
@@ -47,10 +45,14 @@ a {
 
 .tags .tag-button {
   color: #fff;
-  background-color: #68bada;
+  background-color: #aaa;
   display: inline-block;
   margin-right: 5px;
-  padding: 2px 5px;
+  padding: 3px 5px;
+}
+
+.tags .tag-button.active {
+  background-color: #68bada;
 }
 
 .tags .tag-button .remove {
