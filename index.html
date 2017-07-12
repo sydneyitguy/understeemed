@@ -26,7 +26,7 @@
 
     <form id="tag-form">
       <input type="text" id="tag-input" />
-      <button id="add-tag">Add</button>
+      <button id="add-tag" class="button">Add Tag</button>
     </form>
     <div class="tags" id="tags-container"></div>
 
@@ -37,13 +37,20 @@
       </div>
     </script>
 
-    <div class="grey">Fetched <span id="feed-count">0</span> articles</div>
+    <div class="grey" id="feed-count"></div>
     <div id="feed-container"></div>
     <script id="feed-template" type="text/x-handlebars-template">
       <div class="feed">
-        <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank">{{title}}</a></h3>
-        <div class="stats">{{created}} &middot; {{net_votes}} votes &middot; ${{pending_payout_value}}</div>
-        <div class="body">{{body}}</div>
+        {{#if image_url}}
+          <div class="image">
+            <img src="{{image_url}}" />
+          </div>
+        {{/if}}
+        <div class="summary">
+          <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank">{{title}}</a></h3>
+          <div class="stats">{{created}} &middot; {{net_votes}} votes &middot; ${{pending_payout_value}}</div>
+          <div class="body">{{body}}</div>
+        </div>
       </div>
     </script>
 
@@ -78,6 +85,7 @@
         var $feedCount = $('#feed-count');
         var $feedContainer = $('#feed-container');
         var feedTemplate = Handlebars.compile($('#feed-template').html());
+        var page = 1;
 
         var isUnderValued = function(discussion) {
           var pendingPayoutValue = parseFloat(discussion.pending_payout_value);
@@ -85,7 +93,7 @@
 
           return diffTimeInMinutes > 15 &&
             discussion.net_votes < 5 && pendingPayoutValue < 5 &&
-            discussion.body.length > 1000;
+            discussion.body.length > 500;
         };
 
         var fetchNext = function(tag, lastPermlink, lastAuthor) {
@@ -94,11 +102,15 @@
               var len = result.length;
               for (i = 0; i < len; i++) {
                 var discussion = result[i];
-                // console.log(i, discussion);
+                console.log(i, discussion);
 
                 discussion.created = discussion.created + '+00:00';
                 if (isUnderValued(discussion)) {
                   discussion.created = moment(discussion.created).fromNow();
+                  var images = JSON.parse(discussion.json_metadata).image
+                  if (images) {
+                    discussion.image_url = images[0];
+                  }
                   $feedContainer.append(feedTemplate(discussion));
                 }
 
@@ -109,8 +121,10 @@
               }
 
               var totalCount = $feedContainer.find('.feed').length;
-              $feedCount.text(totalCount);
-              if (totalCount < 10) {
+              $feedCount.html('Fetched page ' + page + ' &middot; ' + totalCount + ' articles in total &middot; ' +
+                '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
+              if (totalCount < 20 && page < 20) {
+                page++;
                 fetchNext(tag, lastPermlink, lastAuthor)
               }
             } else {
@@ -121,7 +135,9 @@
 
         return {
           fetch: function(tag) {
+            page = 1;
             $feedContainer.empty();
+            $feedCount.text('Fetching...');
             fetchNext(tag);
           }
         };
@@ -142,6 +158,7 @@
             html += tagTemplate({ tag: tags[i] });
           }
           $tagsContainer.html(html);
+          $tagsContainer.prepend('<div class="tag-button all" data-tag=""><a class="tag-link" href="#">all</a></div>')
         }
 
         return {

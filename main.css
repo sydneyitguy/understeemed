@@ -20,8 +20,57 @@ a {
   color: #aaa;
 }
 
+input[type=text] {
+  width: 300px;
+  padding: 8px;
+  box-sizing: border-box;
+  outline: none;
+  font-size: 14px;
+  border: 1px solid #68bada;
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 9px 20px;
+  font-size: 14px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  box-shadow: 0 0 20px #eee;
+  background-size: 200% auto;
+  background-image: linear-gradient(to right, #68bada 0%, #1a4f98 52%, #68bada 100%);
+  transition: 0.5s;
+  margin-left: -5px;
+}
+.button:hover {
+  background-position: right center;
+}
+
 .feed {
   margin: 30px 0;
+  position: relative;
+}
+
+.feed .image {
+  width: 100px;
+  background-color: #efefef;
+  height: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.feed .image img {
+  max-width: 100px;
+  max-height: 100px;
+  display: block;
+  margin: 0 auto;
+}
+
+.feed .summary {
+  padding-left: 120px;
 }
 
 .feed h3 {
@@ -48,7 +97,12 @@ a {
   background-color: #aaa;
   display: inline-block;
   margin-right: 5px;
-  padding: 3px 5px;
+  padding: 7px 34px 7px 15px;
+  position: relative;
+}
+
+.tags .tag-button.all {
+  padding: 7px 15px;
 }
 
 .tags .tag-button.active {
@@ -57,6 +111,14 @@ a {
 
 .tags .tag-button .remove {
   cursor: pointer;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 23px;
+  text-align: center;
+  line-height: 37px;
+  background-color: rgba(255,255,255,0.3);
 }
 
 .tags .tag-button a {
