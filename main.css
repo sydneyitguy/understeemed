@@ -5,6 +5,11 @@ body {
 
 a {
   text-decoration: none;
+  color: #1a4f98;
+}
+
+a.diff-visited:visited {
+  color: #aaa;
 }
 
 .error {
@@ -20,6 +25,10 @@ a {
   color: #aaa;
 }
 
+.spacer {
+  margin: 0 0.3em;
+}
+
 input[type=text] {
   width: 300px;
   padding: 8px;
@@ -27,6 +36,20 @@ input[type=text] {
   outline: none;
   font-size: 14px;
   border: 1px solid #68bada;
+}
+
+h1 small {
+  font-size: 0.6em;
+  font-weight: normal;
+}
+
+.option-form {
+  font-size: 13px;
+  margin: 20px 0;
+}
+
+.option-form select {
+  font-size: 13px;
 }
 
 .button {

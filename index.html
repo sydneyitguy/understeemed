@@ -21,7 +21,7 @@
 
     <div id="account-container"></div>
     <script id="account-template" type="text/x-handlebars-template">
-      <h1><a href="https://steemit.com/@{{name}}" target="_blank">@{{name}}</a> ({{voting_power}}%)</h1>
+      <h1><a href="https://steemit.com/@{{name}}" target="_blank">@{{name}}</a> <small>(voting power: {{voting_power}}%)</small></h1>
     </script>
 
     <form id="tag-form">
@@ -29,6 +29,53 @@
       <button id="add-tag" class="button">Add Tag</button>
     </form>
     <div class="tags" id="tags-container"></div>
+
+    <form id="option-form" class="option-form">
+      <label>
+        created before
+        <select id="option-created" class="option-select">
+          <option value="0">0 minutes ago</option>
+          <option value="1">1 minute ago</option>
+          <option value="15">15 minutes ago</option>
+          <option value="30" selected>30 minutes ago</option>
+          <option value="1440">1 day ago</option>
+          <option value="4320">3 days ago</option>
+          <option value="8640">6 days ago</option>
+        </select>
+      </label>
+      <span class="spacer">&middot;</span>
+      <label>
+        over
+        <select id="option-votes" class="option-select">
+          <option value="0" selected>0 votes</option>
+          <option value="2">2 votes</option>
+          <option value="5">5 votes</option>
+          <option value="10">10 votes</option>
+          <option value="15">15 votes</option>
+          <option value="20">20 votes</option>
+        </select>
+      </label>
+      <span class="spacer">&middot;</span>
+      <label>
+        values under
+        <select id="option-value" class="option-select">
+          <option value="1">1 SBD</option>
+          <option value="3">3 SBD</option>
+          <option value="5" selected>5 SBD</option>
+          <option value="10">10 SBD</option>
+          <option value="10">100 SBD</option>
+        </select>
+      </label>
+      <span class="spacer">&middot;</span>
+      <label>
+        minimum content length
+        <select id="option-length" class="option-select">
+          <option value="100">100 characters</option>
+          <option value="500" selected>500 characters</option>
+          <option value="1000">1,000 characters</option>
+        </select>
+      </label>
+    </form>
 
     <script id="tag-template" type="text/x-handlebars-template">
       <div class="tag-button" data-tag="{{tag}}">
@@ -47,8 +94,8 @@
           </div>
         {{/if}}
         <div class="summary">
-          <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank">{{title}}</a></h3>
-          <div class="stats">{{created}} &middot; {{net_votes}} votes &middot; ${{pending_payout_value}}</div>
+          <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank" class="diff-visited">{{title}}</a></h3>
+          <div class="stats">{{created}} <span class="spacer">&middot;</span> {{net_votes}} votes <span class="spacer">&middot;</span> ${{pending_payout_value}}</div>
           <div class="body">{{body}}</div>
         </div>
       </div>
@@ -59,6 +106,7 @@
     <script src="./steem.min.js"></script>
     <script src="./moment.min.js"></script>
     <script src="./tag-storage.js"></script>
+    <script src="./remove-md.js"></script>
     <script>
       var $errors = $('.error');
 
@@ -70,7 +118,7 @@
         } else {
           $errors.fadeOut();
           var account = res[0];
-          console.log(account);
+          // console.log(account);
 
           account.voting_power = account.voting_power / 100;
           var template = Handlebars.compile($('#account-template').html());
@@ -87,22 +135,36 @@
         var feedTemplate = Handlebars.compile($('#feed-template').html());
         var page = 1;
 
+        var optionCreated = 30;
+        var $optionCreated = $('#option-created');
+        var optionVotes = 0;
+        var $optionVotes = $('#option-votes');
+        var optionValue = 5;
+        var $optionValue = $('#option-value');
+        var optionLength = 500;
+        var $optionLength = $('#option-length');
+
         var isUnderValued = function(discussion) {
           var pendingPayoutValue = parseFloat(discussion.pending_payout_value);
           var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
 
-          return diffTimeInMinutes > 15 &&
-            discussion.net_votes < 5 && pendingPayoutValue < 5 &&
-            discussion.body.length > 500;
+          return diffTimeInMinutes >= optionCreated &&
+            discussion.net_votes >= optionVotes &&
+            pendingPayoutValue <= optionValue &&
+            discussion.body.length >= optionLength;
         };
 
         var fetchNext = function(tag, lastPermlink, lastAuthor) {
           steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': 20, "start_permlink": lastPermlink, "start_author": lastAuthor }, function(err, result) {
             if (err === null) {
               var len = result.length;
+              if (len === 0) {
+                console.log('End of result, finish');
+                return;
+              }
               for (i = 0; i < len; i++) {
                 var discussion = result[i];
-                console.log(i, discussion);
+                // console.log(i, discussion);
 
                 discussion.created = discussion.created + '+00:00';
                 if (isUnderValued(discussion)) {
@@ -111,6 +173,7 @@
                   if (images) {
                     discussion.image_url = images[0];
                   }
+                  discussion.body = removeMd(discussion.body);
                   $feedContainer.append(feedTemplate(discussion));
                 }
 
@@ -121,9 +184,9 @@
               }
 
               var totalCount = $feedContainer.find('.feed').length;
-              $feedCount.html('Fetched page ' + page + ' &middot; ' + totalCount + ' articles in total &middot; ' +
+              $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
                 '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
-              if (totalCount < 20 && page < 20) {
+              if (totalCount < 20 && page < 100) {
                 page++;
                 fetchNext(tag, lastPermlink, lastAuthor)
               }
@@ -136,6 +199,11 @@
         return {
           fetch: function(tag) {
             page = 1;
+            optionCreated = parseInt($optionCreated.val());
+            optionValue = parseInt($optionValue.val());
+            optionLength = parseInt($optionLength.val());
+            optionVotes = parseInt($optionVotes.val());
+
             $feedContainer.empty();
             $feedCount.text('Fetching...');
             fetchNext(tag);
@@ -159,6 +227,12 @@
           }
           $tagsContainer.html(html);
           $tagsContainer.prepend('<div class="tag-button all" data-tag=""><a class="tag-link" href="#">all</a></div>')
+        };
+
+        var fetchCurrentTag = function() {
+          var tag = window.location.hash.substr(1);
+          FeedFilter.fetch(tag);
+          TagForm.highlight(tag);
         }
 
         return {
@@ -181,10 +255,12 @@
             });
 
             $(window).bind( 'hashchange', function(e) {
-              var tag = window.location.hash.substr(1);
-              FeedFilter.fetch(tag);
-              TagForm.highlight(tag);
+              fetchCurrentTag();
             });
+
+            $('.option-select').change(function() {
+              fetchCurrentTag();
+            })
           },
 
           checkCurrentAnchor: function() {
