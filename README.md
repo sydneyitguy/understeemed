@@ -1,3 +1,3 @@
-== UNDER_STEEMED ==
+# UNDER_STEEMED
 
-A Javascript / HTML client that curates under valued posts from Steemit
+A Steemit curation tool for curators to find out under-valued posts more efficiently.
