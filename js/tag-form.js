@@ -13,10 +13,9 @@ window.TagForm = (function() {
     $tagsContainer.prepend('<div class="tag-button all" data-tag=""><a class="tag-link" href="#">all</a></div>')
   };
 
-  var fetchCurrentTag = function() {
-    var tag = window.location.hash.substr(1);
-    FeedFilter.fetch(tag);
-    TagForm.highlight(tag);
+  var highlight = function(tag) {
+    $('.tag-button').removeClass('active');
+    $('.tag-button[data-tag="' + tag + '"]').addClass('active');
   }
 
   return {
@@ -39,23 +38,14 @@ window.TagForm = (function() {
       });
 
       $(window).bind( 'hashchange', function(e) {
-        fetchCurrentTag();
+        TagForm.fetchCurrentTag();
       });
-
-      $('.option-select').change(function() {
-        fetchCurrentTag();
-      })
     },
 
-    checkCurrentAnchor: function() {
+    fetchCurrentTag: function() {
       var tag = window.location.hash.substr(1);
       FeedFilter.fetch(tag);
-      TagForm.highlight(tag);
-    },
-
-    highlight: function(tag) {
-      $('.tag-button').removeClass('active');
-      $('.tag-button[data-tag="' + tag + '"]').addClass('active');
+      highlight(tag);
     }
   }
 })();

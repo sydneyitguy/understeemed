@@ -10,18 +10,22 @@
     <meta name="description" content="Curated list of Steemit under valued posts"/>
     <meta name="keywords" content="steemit, under value, curation, tool, voting power, stats, curate post"/>
 
-    <link rel="stylesheet" type="text/css" href="./main.css">
+    <link rel="stylesheet" type="text/css" href="./css/main.css">
 
     <!--[if lt IE 9]>
     <script src="https://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
   </head>
   <body>
-    <div class="error">Connection error</div>
+    <div class="errors">Connection error</div>
 
     <div id="account-container"></div>
     <script id="account-template" type="text/x-handlebars-template">
-      <h1><a href="https://steemit.com/@{{name}}" target="_blank">@{{name}}</a> <small>(voting power: {{voting_power}}%)</small></h1>
+      <h1>
+        <a href="https://steemit.com/@{{name}}" target="_blank">@{{name}}</a>
+        <small>(voting power: {{voting_power}}%)</small>
+        <button id="change-user" class="button small">change</button>
+      </h1>
     </script>
 
     <form id="tag-form">
@@ -95,42 +99,42 @@
         {{/if}}
         <div class="summary">
           <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank" class="diff-visited">{{title}}</a></h3>
-          <div class="stats">{{created}} <span class="spacer">&middot;</span> {{net_votes}} votes <span class="spacer">&middot;</span> ${{pending_payout_value}}</div>
+          <div class="stats">
+            <a href="https://steemit.com/@{{author}}" target="_blank">@{{author}}</a>
+            <span class="spacer">&middot;</span>
+            {{created}}
+            <span class="spacer">&middot;</span>
+            {{net_votes}} votes
+            <span class="spacer">&middot;</span>
+            ${{pending_payout_value}}
+          </div>
           <div class="body">{{body}}</div>
         </div>
       </div>
     </script>
 
+    <footer>
+      <hr/>
+      <center>
+        <p>Do you like it? Buy me a beer to support this project :)</p>
+        <a href="https://steemit.com/@tabris" target="_blank"><img src="./img/follow-btn@2x.png" alt="Follow @tabris" width="186" height="36" /></a>
+      </center>
+    </footer>
+
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.10/handlebars.min.js" integrity="sha256-0JaDbGZRXlzkFbV8Xi8ZhH/zZ6QQM0Y3dCkYZ7JYq34=" crossorigin="anonymous"></script>
-    <script src="./steem.min.js"></script>
-    <script src="./moment.min.js"></script>
-    <script src="./tag-storage.js"></script>
-    <script src="./remove-md.js"></script>
-    <script src="./feed-filter.js"></script>
-    <script src="./tag-form.js"></script>
+    <script src="./js/steem.min.js"></script>
+    <script src="./js/moment.min.js"></script>
+    <script src="./js/tag-storage.js"></script>
+    <script src="./js/remove-md.js"></script>
+    <script src="./js/account.js"></script>
+    <script src="./js/feed-filter.js"></script>
+    <script src="./js/tag-form.js"></script>
     <script>
-      var $errors = $('.error');
-
-      // MARK: - Account info
-
-      steem.api.getAccounts(['tabris'], function(error, res){
-        if (error) {
-          $errors.fadeIn();
-          console.log(error);
-        } else {
-          $errors.fadeOut();
-          var account = res[0];
-          // console.log(account);
-
-          account.voting_power = account.voting_power / 100;
-          var template = Handlebars.compile($('#account-template').html());
-          $('#account-container').html(template(account));
-        }
-      });
-
+      Account.bind();
+      FeedFilter.bind();
       TagForm.bind();
-      TagForm.checkCurrentAnchor();
+      TagForm.fetchCurrentTag();
     </script>
   </body>
 </html>

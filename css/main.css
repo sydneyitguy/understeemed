@@ -1,6 +1,7 @@
 body {
   font-size: 16px;
   color: #202020;
+  background-color: #fff;
 }
 
 a {
@@ -12,9 +13,10 @@ a.diff-visited:visited {
   color: #aaa;
 }
 
-.error {
-  color: #a11517;
+.errors {
+  color: #bc081c;
   display: none;
+  padding: 20px 0;
 }
 
 .highlight {
@@ -66,9 +68,14 @@ h1 small {
   background-image: linear-gradient(to right, #68bada 0%, #1a4f98 52%, #68bada 100%);
   transition: 0.5s;
   margin-left: -5px;
+  outline: none;
 }
 .button:hover {
   background-position: right center;
+}
+.button.small {
+  font-size: 11px;
+  padding: 3px 5px;
 }
 
 .feed {
@@ -105,7 +112,7 @@ h1 small {
 }
 
 .feed .body {
-  height: 33px;
+  height: 2.4em;
   font-size: 13px;
   overflow: hidden;
   color: #aaa;
@@ -146,4 +153,28 @@ h1 small {
 
 .tags .tag-button a {
   color: #fff;
+}
+
+footer {
+  padding: 30px 0;
+  color: #999;
+}
+
+hr {
+  border-top: 1px solid #ddd;
+  text-align: center;
+  height: 0;
+  border-width: 1px 0 0 0;
+  margin-bottom: 50px;
+}
+
+hr:after {
+  content: '\002665';
+  display: inline-block;
+  position: relative;
+  top: -15px;
+  padding: 0 10px;
+  background-color: #fff;
+  color: #f7475a;
+  font-size: 27px;
 }
