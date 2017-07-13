@@ -87,7 +87,6 @@ window.FeedFilter = (function() {
       if (savedOptions) {
         options = JSON.parse(savedOptions);
       }
-      console.log(options);
       $optionCreated.val(options['created']);
       $optionVotes.val(options['votes']);
       $optionValue.val(options['value']);
@@ -95,7 +94,6 @@ window.FeedFilter = (function() {
 
       // Options changed
       $('.option-select').change(function() {
-        console.log('changed');
         options = {
           created: parseInt($optionCreated.val()),
           votes: parseInt($optionVotes.val()),
