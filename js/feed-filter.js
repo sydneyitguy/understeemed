@@ -34,7 +34,7 @@ window.FeedFilter = (function() {
       if (err === null) {
         $('.errors').fadeOut();
 
-        console.log(result);
+        // console.log(result);
 
         var len = result.length;
         var lastPermlink = null;
@@ -76,7 +76,7 @@ window.FeedFilter = (function() {
           console.log('Results size is less than the limit -> Last page?');
         } else if (totalCount < 20 && page < 100) {
           page++;
-          console.log(tag, lastPermlink, lastAuthor);
+          // console.log(tag, lastPermlink, lastAuthor);
           fetchNext(tag, lastPermlink, lastAuthor);
         } else {
           if (totalCount >= 20) {
