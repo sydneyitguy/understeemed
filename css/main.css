@@ -32,12 +32,19 @@ a.diff-visited:visited {
 }
 
 input[type=text] {
-  width: 300px;
+  width: 219px;
   padding: 8px;
   box-sizing: border-box;
   outline: none;
   font-size: 14px;
   border: 1px solid #68bada;
+  border-radius: 0;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 28px;
+  }
 }
 
 h1 small {
@@ -48,16 +55,64 @@ h1 small {
 .option-form {
   font-size: 13px;
   margin: 20px 0;
+  line-height: 1.6;
+}
+
+.option-form label {
+  display: inline-block;
+  margin: 2px 0;
+}
+
+.option-form .select-container {
+  position: relative;
+  display: inline-block;
+  background: #68bada;
+  overflow: hidden;
+  border-radius: 0;
+  vertical-align: top;
+}
+/* Arrow */
+.option-form .select-container::after {
+  content: '\25BC';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  text-align: center;
+  font-size: 9px;
+  line-height: 23px;
+  color: #fff;
+  background-color: rgba(255,255,255,0.3);
+  pointer-events: none;
 }
 
 .option-form select {
-  font-size: 13px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+  outline: 0;
+  box-shadow: none;
+  border: 0 !important;
+  background: transparent;
+  background-image: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 2px 27px 2px 5px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.option-form select::-ms-expand {
+  display: none;
 }
 
 .button {
   border: none;
   color: white;
-  padding: 9px 20px;
+  padding: 9px 15px;
   font-size: 14px;
   text-align: center;
   text-decoration: none;
@@ -127,6 +182,7 @@ h1 small {
   background-color: #aaa;
   display: inline-block;
   margin-right: 5px;
+  margin-bottom: 5px;
   padding: 7px 34px 7px 15px;
   position: relative;
 }

@@ -23,8 +23,8 @@
     <script id="account-template" type="text/x-handlebars-template">
       <h1>
         <a href="https://steemit.com/@{{name}}" target="_blank">@{{name}}</a>
-        <small>(voting power: {{voting_power}}%)</small>
-        <button id="change-user" class="button small">change</button>
+        <small>(VP: {{voting_power}}%)</small>
+        <button id="change-user" class="button small">Change</button>
       </h1>
     </script>
 
@@ -37,47 +37,56 @@
     <form id="option-form" class="option-form">
       <label>
         created before
-        <select id="option-created" class="option-select">
-          <option value="0">0 minutes ago</option>
-          <option value="1">1 minute ago</option>
-          <option value="15">15 minutes ago</option>
-          <option value="30" selected>30 minutes ago</option>
-          <option value="1440">1 day ago</option>
-          <option value="4320">3 days ago</option>
-          <option value="8640">6 days ago</option>
-        </select>
+        <span class="select-container">
+          <select id="option-created" class="option-select">
+            <option value="0">0 minutes ago</option>
+            <option value="1">1 minute ago</option>
+            <option value="15">15 minutes ago</option>
+            <option value="30" selected>30 minutes ago</option>
+            <option value="1440">1 day ago</option>
+            <option value="4320">3 days ago</option>
+            <option value="8640">6 days ago</option>
+          </select>
+        </span>
+        <span class="spacer">&middot;</span>
       </label>
-      <span class="spacer">&middot;</span>
       <label>
         at least
-        <select id="option-votes" class="option-select">
-          <option value="0" selected>0 votes</option>
-          <option value="2">2 votes</option>
-          <option value="5">5 votes</option>
-          <option value="10">10 votes</option>
-          <option value="15">15 votes</option>
-          <option value="20">20 votes</option>
-        </select>
+        <span class="select-container">
+          <select id="option-votes" class="option-select">
+            <option value="0" selected>0 votes</option>
+            <option value="2">2 votes</option>
+            <option value="5">5 votes</option>
+            <option value="10">10 votes</option>
+            <option value="15">15 votes</option>
+            <option value="20">20 votes</option>
+          </select>
+        </span>
+        <span class="spacer">&middot;</span>
       </label>
-      <span class="spacer">&middot;</span>
       <label>
         values under
-        <select id="option-value" class="option-select">
-          <option value="1">1 SBD</option>
-          <option value="3">3 SBD</option>
-          <option value="5" selected>5 SBD</option>
-          <option value="10">10 SBD</option>
-          <option value="10">100 SBD</option>
-        </select>
+        <span class="select-container">
+          <select id="option-value" class="option-select">
+            <option value="1">1 SBD</option>
+            <option value="3">3 SBD</option>
+            <option value="5" selected>5 SBD</option>
+            <option value="10">10 SBD</option>
+            <option value="10">100 SBD</option>
+          </select>
+        </span>
+        <span class="spacer">&middot;</span>
       </label>
-      <span class="spacer">&middot;</span>
       <label>
-        minimum content length
-        <select id="option-length" class="option-select">
-          <option value="100">100 characters</option>
-          <option value="500" selected>500 characters</option>
-          <option value="1000">1,000 characters</option>
-        </select>
+        over
+        <span class="select-container">
+          <select id="option-length" class="option-select">
+            <option value="100">100 characters</option>
+            <option value="500" selected>500 characters</option>
+            <option value="1000">1,000 characters</option>
+          </select>
+        </span>
+        long
       </label>
     </form>
 
