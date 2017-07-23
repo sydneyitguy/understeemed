@@ -1,5 +1,9 @@
 window.FeedFilter = (function() {
   var KEY_OPTIONS = 'OPTIONS';
+  var PER_PAGE = 100;
+  var MAX_PAGE = 100;
+  var MAX_STACK_SIZE = 100;
+  var MAX_TIME = 2880; // 2 days old max
 
   var $feedCount = $('#feed-count');
   var $feedContainer = $('#feed-container');
@@ -18,19 +22,37 @@ window.FeedFilter = (function() {
   }
 
   var permlinks = {}; // To remove duplicates
+  var discussions = {}; // To sort by scores
 
   var isUnderValued = function(discussion) {
     var pendingPayoutValue = parseFloat(discussion.pending_payout_value);
     var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
 
     return diffTimeInMinutes >= options['created'] &&
+      discussion.net_rshares > 0 && // filter down-voted
+      discussion.image_url && // filter with images
       discussion.net_votes >= options['votes'] &&
       pendingPayoutValue <= options['value'] &&
-      discussion.body.length >= options['length'];
+      discussion.body_trimed.length >= options['length'];
+  };
+
+  var getScore = function(discussion) {
+    var pendingPayoutValue = parseFloat(discussion.net_rshares);
+    if (pendingPayoutValue == 0) {
+      console.log(discussion);
+    }
+    return pendingPayoutValue / discussion.net_votes;
+  };
+
+  var sortObject = function(obj) {
+    return Object.keys(obj).sort().reduce(function (result, key) {
+      result[key] = obj[key];
+      return result;
+    }, {});
   };
 
   var fetchNext = function(tag, permlink, author) {
-    steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': 20, "start_permlink": permlink, "start_author": author }, function(err, result) {
+    steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': PER_PAGE, "start_permlink": permlink, "start_author": author }, function(err, result) {
       if (err === null) {
         $('.errors').fadeOut();
 
@@ -57,39 +79,55 @@ window.FeedFilter = (function() {
           }
 
           discussion.created = discussion.created + '+00:00';
+          discussion.body_trimed = removeMd(discussion.body);
+          var images = JSON.parse(discussion.json_metadata).image
+          if (images) {
+            discussion.image_url = images[0];
+          }
+
           if (isUnderValued(discussion)) {
-            discussion.created = moment(discussion.created).fromNow();
-            var images = JSON.parse(discussion.json_metadata).image
-            if (images) {
-              discussion.image_url = images[0];
-            }
-            discussion.body = removeMd(discussion.body);
-            $feedContainer.append(feedTemplate(discussion));
+            discussion.created = moment(discussion.created).format('MMM D, hh:mma');
+            discussion.body_trimed = discussion.body_trimed.substring(0, 200);
+            discussions[getScore(discussion)] = discussion;
+          }
+
+          var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
+          if (diffTimeInMinutes > MAX_TIME) {
+            console.log('Fetched till the maximum age, Stop.');
+            return render();
           }
         }
 
-        var totalCount = $feedContainer.find('.feed').length;
+        var totalCount = Object.keys(discussions).length;
         $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
           '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
 
-        if (len < 20) {
+        if (len < PER_PAGE) {
           console.log('Results size is less than the limit -> Last page?');
-        } else if (totalCount < 20 && page < 100) {
+          return render();
+        } else if (totalCount > MAX_STACK_SIZE) {
+          console.log('Fetched maximum articles: ' + totalCount + ', Stop.');
+          return render();
+        } else if (page >= MAX_PAGE) {
+          console.log('Fetched maximum pages: ' + page + ', Stop.');
+          return render();
+        } else {
           page++;
           // console.log(tag, lastPermlink, lastAuthor);
-          fetchNext(tag, lastPermlink, lastAuthor);
-        } else {
-          if (totalCount >= 20) {
-            console.log("Finished fetching 20 results, stop.");
-          } else {
-            console.log("Couldn't find enough matching posts till page 100.");
-          }
+          return fetchNext(tag, lastPermlink, lastAuthor);
         }
       } else {
           console.log(err);
           $('.errors').fadeIn();
       }
     });
+  };
+
+  var render = function() {
+    var sorted = sortObject(discussions);
+    for (i in sorted) {
+      $feedContainer.append(feedTemplate(discussions[i]));
+    }
   };
 
   return {

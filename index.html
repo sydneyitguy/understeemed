@@ -98,29 +98,15 @@
     </script>
 
     <div class="grey" id="feed-count"></div>
-    <div id="feed-container"></div>
-    <script id="feed-template" type="text/x-handlebars-template">
-      <div class="feed">
-        {{#if image_url}}
-          <div class="image">
-            <img src="{{image_url}}" />
-          </div>
-        {{/if}}
-        <div class="summary">
-          <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank" class="diff-visited">{{title}}</a></h3>
-          <div class="stats">
-            <a href="https://steemit.com/@{{author}}" target="_blank">@{{author}}</a>
-            <span class="spacer">&middot;</span>
-            {{created}}
-            <span class="spacer">&middot;</span>
-            {{net_votes}} votes
-            <span class="spacer">&middot;</span>
-            ${{pending_payout_value}}
-          </div>
-          <div class="body">{{body}}</div>
-        </div>
-      </div>
-    </script>
+    <table id="feed-container"></table>
+    <script id="feed-template" type="text/x-handlebars-template"><tr>
+  <td><img src="{{image_url}}" width="200" /></td>
+  <td>
+    <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank">{{title}}</a></h3>
+    <h4><em><a href="https://steemit.com/@{{author}}" target="_blank">@{{author}}</a> · {{created}} · {{net_votes}} votes · ${{pending_payout_value}}</em></h4>
+    <p>{{body_trimed}}</p>
+  </td>
+</tr></script>
 
     <footer>
       <hr/>

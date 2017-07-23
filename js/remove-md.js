@@ -30,7 +30,9 @@ function removeMd(md, options) {
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
       .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
       // Remove images
+      .replace(/\!\[.*?\]\((.|[\r\n])+\)/g, '')
       .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
+      .replace(/(?:https?|ftp):\/\/[\n\S]+/g, '')
       // Remove inline links
       .replace(/\[(.*?)\][\[\(].*?[\]\)]/g, '$1')
       // Remove Blockquotes
@@ -47,7 +49,7 @@ function removeMd(md, options) {
       // Remove inline code
       .replace(/`(.+?)`/g, '$1')
       // Replace two or more newlines with exactly two? Not entirely sure this belongs here...
-      .replace(/\n{2,}/g, '\n\n');
+      .replace(/\n/g, '');
   } catch(e) {
     console.error(e);
     return md;
