@@ -3,7 +3,7 @@ window.FeedFilter = (function() {
   var PER_PAGE = 100;
   var MAX_PAGE = 100;
   var MAX_STACK_SIZE = 100;
-  var MAX_TIME = 2880; // 2 days old max
+  var MAX_TIME = 1440; // 1 day old max
 
   var $feedCount = $('#feed-count');
   var $feedContainer = $('#feed-container');
@@ -87,7 +87,8 @@ window.FeedFilter = (function() {
 
           if (isUnderValued(discussion)) {
             discussion.created = moment(discussion.created).format('MMM D, hh:mma');
-            discussion.body_trimed = discussion.body_trimed.substring(0, 200);
+            discussion.body_trimed = discussion.body_trimed.substring(0, 100);
+            discussion.per_vote = Math.round(parseFloat(discussion.pending_payout_value) * 1000 / discussion.net_votes) / 1000;
             discussions[getScore(discussion)] = discussion;
           }
 

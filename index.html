@@ -103,8 +103,12 @@
   <td><img src="{{image_url}}" width="200" /></td>
   <td>
     <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank">{{title}}</a></h3>
-    <h4><em><a href="https://steemit.com/@{{author}}" target="_blank">@{{author}}</a> · {{created}} · {{net_votes}} votes · ${{pending_payout_value}}</em></h4>
-    <p>{{body_trimed}}</p>
+    <h4>
+      <a href="https://steemit.com/@{{author}}" target="_blank">@{{author}}</a> · {{created}}<br>
+      <em>{{net_votes}} votes · ${{pending_payout_value}} (${{per_vote}} per vote)</em>
+    </h4>
+    <br>
+    {{body_trimed}}...
   </td>
 </tr></script>
 

@@ -30,7 +30,6 @@ function removeMd(md, options) {
       .replace(/\[\^.+?\](\: .*?$)?/g, '')
       .replace(/\s{0,2}\[.*?\]: .*?$/g, '')
       // Remove images
-      .replace(/\!\[.*?\]\((.|[\r\n])+\)/g, '')
       .replace(/\!\[.*?\][\[\(].*?[\]\)]/g, '')
       .replace(/(?:https?|ftp):\/\/[\n\S]+/g, '')
       // Remove inline links
