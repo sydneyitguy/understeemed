@@ -54,7 +54,7 @@ window.FeedFilter = (function() {
   var fetchNext = function(tag, permlink, author) {
     steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': PER_PAGE, "start_permlink": permlink, "start_author": author }, function(err, result) {
       if (err) {
-        console.log(err);
+        console.error(err);
         $('.errors').fadeIn();
 
         return;
@@ -108,6 +108,8 @@ window.FeedFilter = (function() {
       $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
         '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
 
+      console.log('Fetched ' + len + ' new posts, ' + Object.keys(permlinks).length + ' in total => ' + totalCount + ' filtered');
+
       if (len < PER_PAGE) {
         console.log('Results size is less than the limit -> Last page?');
         return render();
@@ -119,7 +121,7 @@ window.FeedFilter = (function() {
         return render();
       } else {
         page++;
-        console.log(tag, lastPermlink, lastAuthor);
+
         return fetchNext(tag, lastPermlink, lastAuthor);
       }
     });
