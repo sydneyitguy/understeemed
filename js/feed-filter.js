@@ -53,73 +53,74 @@ window.FeedFilter = (function() {
 
   var fetchNext = function(tag, permlink, author) {
     steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': PER_PAGE, "start_permlink": permlink, "start_author": author }, function(err, result) {
-      if (err === null) {
-        $('.errors').fadeOut();
+      if (err) {
+        console.log(err);
+        $('.errors').fadeIn();
 
-        // console.log(result);
+        return;
+      }
 
-        var len = result.length;
-        var lastPermlink = null;
-        var lastAuthor = null;
+      $('.errors').fadeOut();
+      // console.log(result);
 
-        for (i = 0; i < len; i++) {
-          var discussion = result[i];
-          // console.log(i, discussion);
+      var len = result.length;
+      var lastPermlink = null;
+      var lastAuthor = null;
 
-          if (i == len - 1) {
-            lastPermlink = discussion.permlink;
-            lastAuthor = discussion.author;
-          }
+      for (i = 0; i < len; i++) {
+        var discussion = result[i];
+        // console.log(i, discussion);
 
-          if (permlinks[discussion.id]) {
-            // console.log('already exists');
-            continue;
-          } else {
-            permlinks[discussion.id] = 1;
-          }
-
-          discussion.created = discussion.created + '+00:00';
-          discussion.body_trimed = removeMd(discussion.body);
-          var images = JSON.parse(discussion.json_metadata).image
-          if (images) {
-            discussion.image_url = images[0];
-          }
-
-          if (isUnderValued(discussion)) {
-            discussion.created = moment(discussion.created).format('MMM D, hh:mma');
-            discussion.body_trimed = discussion.body_trimed.substring(0, 100);
-            discussion.per_vote = Math.round(parseFloat(discussion.pending_payout_value) * 1000 / discussion.net_votes) / 1000;
-            discussions[getScore(discussion)] = discussion;
-          }
-
-          var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
-          if (diffTimeInMinutes > MAX_TIME) {
-            console.log('Fetched till the maximum age, Stop.');
-            return render();
-          }
+        if (i == len - 1) {
+          lastPermlink = discussion.permlink;
+          lastAuthor = discussion.author;
         }
 
-        var totalCount = Object.keys(discussions).length;
-        $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
-          '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
-
-        if (len < PER_PAGE) {
-          console.log('Results size is less than the limit -> Last page?');
-          return render();
-        } else if (totalCount > MAX_STACK_SIZE) {
-          console.log('Fetched maximum articles: ' + totalCount + ', Stop.');
-          return render();
-        } else if (page >= MAX_PAGE) {
-          console.log('Fetched maximum pages: ' + page + ', Stop.');
-          return render();
+        if (permlinks[discussion.id]) {
+          // console.log('already exists');
+          continue;
         } else {
-          page++;
-          // console.log(tag, lastPermlink, lastAuthor);
-          return fetchNext(tag, lastPermlink, lastAuthor);
+          permlinks[discussion.id] = 1;
         }
+
+        discussion.created = discussion.created + '+00:00';
+        discussion.body_trimed = removeMd(discussion.body);
+        var images = JSON.parse(discussion.json_metadata).image
+        if (images) {
+          discussion.image_url = images[0];
+        }
+
+        if (isUnderValued(discussion)) {
+          discussion.created = moment(discussion.created).format('MMM D, hh:mma');
+          discussion.body_trimed = discussion.body_trimed.substring(0, 100);
+          discussion.per_vote = Math.round(parseFloat(discussion.pending_payout_value) * 1000 / discussion.net_votes) / 1000;
+          discussions[getScore(discussion)] = discussion;
+        }
+
+        var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
+        if (diffTimeInMinutes > MAX_TIME) {
+          console.log('Fetched till the maximum age, Stop.');
+          return render();
+        }
+      }
+
+      var totalCount = Object.keys(discussions).length;
+      $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
+        '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
+
+      if (len < PER_PAGE) {
+        console.log('Results size is less than the limit -> Last page?');
+        return render();
+      } else if (totalCount > MAX_STACK_SIZE) {
+        console.log('Fetched maximum articles: ' + totalCount + ', Stop.');
+        return render();
+      } else if (page >= MAX_PAGE) {
+        console.log('Fetched maximum pages: ' + page + ', Stop.');
+        return render();
       } else {
-          console.log(err);
-          $('.errors').fadeIn();
+        page++;
+        console.log(tag, lastPermlink, lastAuthor);
+        return fetchNext(tag, lastPermlink, lastAuthor);
       }
     });
   };
