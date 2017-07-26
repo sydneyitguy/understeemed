@@ -31,6 +31,9 @@ window.Account = (function() {
             setAccount(newName);
         }
       });
+      setInterval(function() {
+        setAccount(username);
+      }, 60000); // Refresh accounts every minute
       setAccount(username);
     }
   }
