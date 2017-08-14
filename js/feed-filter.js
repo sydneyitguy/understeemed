@@ -41,11 +41,13 @@ window.FeedFilter = (function() {
     if (pendingPayoutValue == 0) {
       console.log(discussion);
     }
-    return pendingPayoutValue / discussion.net_votes;
+    return Math.round(pendingPayoutValue / discussion.net_votes);
   };
 
   var sortObject = function(obj) {
-    return Object.keys(obj).sort().reduce(function (result, key) {
+    return Object.keys(obj).sort(function(a, b) {
+      return a - b;
+    }).reduce(function (result, key) {
       result[key] = obj[key];
       return result;
     }, {});
