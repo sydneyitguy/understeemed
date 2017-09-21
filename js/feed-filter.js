@@ -10,12 +10,14 @@ window.FeedFilter = (function() {
   var $optionVotes = $('#option-votes');
   var $optionValue = $('#option-value');
   var $optionLength = $('#option-length');
+  var $optionReputation = $('#option-reputation');
   var options = {
     created: 30, // minimum minutes since created
     votes: 0, // minimum votes received
     value: 5, // maximum SBD received
+    reputation: 0, // minimum author reputation score
     length: 500 // minimum content length
-  }
+  };
 
   var permlinks = {}; // To remove duplicates
 
@@ -24,6 +26,7 @@ window.FeedFilter = (function() {
     var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
 
     return diffTimeInMinutes >= options['created'] &&
+      discussion.author_rep_score >= options['reputation'] &&
       discussion.net_votes >= options['votes'] &&
       pendingPayoutValue <= options['value'] &&
       discussion.body.length >= options['length'];
@@ -57,6 +60,7 @@ window.FeedFilter = (function() {
           }
 
           discussion.created = discussion.created + '+00:00';
+          discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
           if (isUnderValued(discussion)) {
             discussion.created = moment(discussion.created).fromNow();
             var images = JSON.parse(discussion.json_metadata).image
@@ -64,7 +68,6 @@ window.FeedFilter = (function() {
               discussion.image_url = images[0];
             }
             discussion.body = removeMd(discussion.body);
-            discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
             $feedContainer.append(feedTemplate(discussion));
           }
         }
@@ -108,15 +111,18 @@ window.FeedFilter = (function() {
       var savedOptions = localStorage.getItem(KEY_OPTIONS);
       if (savedOptions) {
         options = JSON.parse(savedOptions);
+        options['reputation'] = options['reputation'] || 0;
       }
       $optionCreated.val(options['created']);
       $optionVotes.val(options['votes']);
       $optionValue.val(options['value']);
       $optionLength.val(options['length']);
+      $optionReputation.val(options['reputation']);
 
       // Options changed
       $('.option-select').change(function() {
         options = {
+          reputation: parseInt($optionReputation.val()),
           created: parseInt($optionCreated.val()),
           votes: parseInt($optionVotes.val()),
           value: parseInt($optionValue.val()),
