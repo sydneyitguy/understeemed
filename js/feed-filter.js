@@ -64,6 +64,7 @@ window.FeedFilter = (function() {
               discussion.image_url = images[0];
             }
             discussion.body = removeMd(discussion.body);
+            discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
             $feedContainer.append(feedTemplate(discussion));
           }
         }
