@@ -11,11 +11,13 @@ window.FeedFilter = (function() {
   var $optionValue = $('#option-value');
   var $optionLength = $('#option-length');
   var $optionReputation = $('#option-reputation');
+  var $optionImages = $('#option-images');
   var options = {
     created: 30, // minimum minutes since created
     votes: 0, // minimum votes received
     value: 5, // maximum SBD received
     reputation: 0, // minimum author reputation score
+    images: 1, // minimum number of images
     length: 500 // minimum content length
   };
 
@@ -28,6 +30,7 @@ window.FeedFilter = (function() {
     return diffTimeInMinutes >= options['created'] &&
       discussion.author_rep_score >= options['reputation'] &&
       discussion.net_votes >= options['votes'] &&
+      (discussion.images||[]).length >= options['images'] &&
       pendingPayoutValue <= options['value'] &&
       discussion.body.length >= options['length'];
   };
@@ -61,11 +64,11 @@ window.FeedFilter = (function() {
 
           discussion.created = discussion.created + '+00:00';
           discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
+          discussion.images = JSON.parse(discussion.json_metadata).image;
           if (isUnderValued(discussion)) {
             discussion.created = moment(discussion.created).fromNow();
-            var images = JSON.parse(discussion.json_metadata).image
-            if (images) {
-              discussion.image_url = images[0];
+            if (discussion.images) {
+              discussion.image_url = discussion.images[0];
             }
             discussion.body = removeMd(discussion.body);
             $feedContainer.append(feedTemplate(discussion));
@@ -112,12 +115,14 @@ window.FeedFilter = (function() {
       if (savedOptions) {
         options = JSON.parse(savedOptions);
         options['reputation'] = options['reputation'] || 0;
+        options['images'] = options['images'] || 0;
       }
       $optionCreated.val(options['created']);
       $optionVotes.val(options['votes']);
       $optionValue.val(options['value']);
       $optionLength.val(options['length']);
       $optionReputation.val(options['reputation']);
+      $optionImages.val(options['images']);
 
       // Options changed
       $('.option-select').change(function() {
@@ -126,6 +131,7 @@ window.FeedFilter = (function() {
           created: parseInt($optionCreated.val()),
           votes: parseInt($optionVotes.val()),
           value: parseInt($optionValue.val()),
+          images: parseInt($optionImages.val()),
           length: parseInt($optionLength.val())
         };
         localStorage.setItem(KEY_OPTIONS, JSON.stringify(options), 3650);
