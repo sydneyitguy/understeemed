@@ -45,6 +45,7 @@ window.FeedFilter = (function() {
         var len = result.length;
         var lastPermlink = null;
         var lastAuthor = null;
+        var posts_by_author = {};
 
         for (i = 0; i < len; i++) {
           var discussion = result[i];
@@ -64,14 +65,20 @@ window.FeedFilter = (function() {
 
           discussion.created = discussion.created + '+00:00';
           discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
-          discussion.images = JSON.parse(discussion.json_metadata).image;
+          discussion.metadata = JSON.parse(discussion.json_metadata);
+          discussion.images = discussion.metadata.image;
           if (isUnderValued(discussion)) {
             discussion.created = moment(discussion.created).fromNow();
             if (discussion.images) {
               discussion.image_url = discussion.images[0];
             }
             discussion.body = removeMd(discussion.body);
-            $feedContainer.append(feedTemplate(discussion));
+            discussion.tags_string = (discussion.metadata.tags||[]).join(', ');
+            var $post = $(feedTemplate(discussion));
+            $feedContainer.append($post);
+            $post.data('duscussion', discussion);
+            posts_by_author[discussion.author] = posts_by_author[discussion.author] || [];
+            posts_by_author[discussion.author].push($post);
           }
         }
 
@@ -92,10 +99,50 @@ window.FeedFilter = (function() {
             console.log("Couldn't find enough matching posts till page 100.");
           }
         }
+
+        // Fetch average post payout for each user
+        // and update DOM once data is ready
+        updateAveragePayout(posts_by_author);
+
       } else {
           console.log(err);
           $('.errors').fadeIn();
       }
+    });
+  };
+
+  var updateAveragePayout = function(posts_by_author) {
+    var authors = Object.keys(posts_by_author);
+    if (!authors.length) {
+      return;
+    }
+
+    // Fetch last 10 posts for each author,
+    // calculate average payout and update DOM
+    authors.forEach(function(author) {
+      var beforeDate = new Date().toISOString().slice(0, 19); // 2017-01-01T00:00:00
+      steem.api.getDiscussionsByAuthorBeforeDate(author, '', beforeDate, 10, function(err, posts) {
+        if (err) {
+          console.log('Unable to fetch average payout for '+author, err);
+          return;
+        }
+        if (posts.length <= 0) {
+          return; // being paranoid
+        }
+
+        // Calculate total and average payout
+        var total_payout = posts.reduce(function(total, post) {
+          return total + parseFloat((post.total_payout_value||'0').split(' ')[0]);
+        }, 0);
+        var avg_payout = total_payout / posts.length;
+
+        // Update DOM
+        posts_by_author[author].forEach(function($post) {
+          $post.find('.author-average-payout').show().find('.amount').text(
+            "$" + (Math.round(avg_payout*1000)/1000) + ' ' + (posts[0].total_payout_value.split(' ')[1]||'')
+          );
+        });
+      });
     });
   };
 

@@ -182,6 +182,13 @@ h1 small {
   font-weight: 400;
   font-family: Source Sans Pro,Helvetica Neue,Helvetica,Arial,sans-serif;
 }
+.feed .stats .author-average-payout {
+  color: #aaa;
+  font-size: 80%;
+}
+.feed .stats .author-average-payout .amount {
+  font-weight: bold;
+}
 .feed .body {
   height: 2.4em;
   font-size: 13px;
