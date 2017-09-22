@@ -111,40 +111,68 @@ window.FeedFilter = (function() {
     });
   };
 
-  var updateAveragePayout = function(posts_by_author) {
-    var authors = Object.keys(posts_by_author);
-    if (!authors.length) {
-      return;
-    }
+  /**
+   * updateAveragePayout()
+   * Fetch last 10 posts for each author, calculate average payout and update DOM
+   * @param posts_by_author object { author_name: Array of jQuery elements that represent posts }
+   */
+  var updateAveragePayout = (function() { "use strict";
 
-    // Fetch last 10 posts for each author,
-    // calculate average payout and update DOM
-    authors.forEach(function(author) {
-      var beforeDate = new Date().toISOString().slice(0, 19); // 2017-01-01T00:00:00
-      steem.api.getDiscussionsByAuthorBeforeDate(author, '', beforeDate, 10, function(err, posts) {
-        if (err) {
-          console.log('Unable to fetch average payout for '+author, err);
+    var cache = {};
+    var currency = null;
+
+    return updateAll;
+
+    function updateAll(posts_by_author) {
+      var authors = Object.keys(posts_by_author);
+      if (!authors.length) {
+        return;
+      }
+
+      authors.forEach(function(author) {
+
+        // Don't ever fetch same author twice. Update DOM right away.
+        if (cache[author] !== undefined) {
+          updatePosts(posts_by_author[author], cache[author], currency);
           return;
         }
-        if (posts.length <= 0) {
-          return; // being paranoid
-        }
 
-        // Calculate total and average payout
-        var total_payout = posts.reduce(function(total, post) {
-          return total + parseFloat((post.total_payout_value||'0').split(' ')[0]);
-        }, 0);
-        var avg_payout = total_payout / posts.length;
+        // Fetch last 10 posts of an author from API
+        var beforeDate = new Date().toISOString().slice(0, 19); // 2017-01-01T00:00:00
+        steem.api.getDiscussionsByAuthorBeforeDate(author, '', beforeDate, 10, function(err, posts) {
+          if (err) {
+            cache[author] = 0;
+            console.log('Unable to fetch average payout for '+author, err);
+            return;
+          }
+          if (posts.length <= 0) {
+            cache[author] = 0;
+            console.log('This can not happen: author has no posts '+author);
+            return;
+          }
 
-        // Update DOM
-        posts_by_author[author].forEach(function($post) {
-          $post.find('.author-average-payout').show().find('.amount').text(
-            "$" + (Math.round(avg_payout*1000)/1000) + ' ' + (posts[0].total_payout_value.split(' ')[1]||'')
-          );
+          // Calculate total and average payout
+          var total_payout = posts.reduce(function(total, post) {
+            return total + parseFloat((post.total_payout_value||'0').split(' ')[0]);
+          }, 0);
+          var avg_payout = total_payout / posts.length;
+          cache[author] = avg_payout;
+
+          // Update DOM
+          currency = posts[0].total_payout_value.split(' ')[1]||'';
+          updatePosts(posts_by_author[author], avg_payout, currency);
         });
       });
-    });
-  };
+    }
+
+    function updatePosts(posts, avg_payout, currency) {
+      posts.forEach(function($post) {
+        $post.find('.author-average-payout').show().find('.amount').text(
+          "$" + (Math.round(avg_payout*1000)/1000) + ' ' + currency
+        );
+      });
+    }
+  }());
 
   return {
     fetch: function(tag) {
