@@ -41,6 +41,7 @@
           <select id="option-created" class="option-select">
             <option value="0">0 minutes ago</option>
             <option value="1">1 minute ago</option>
+            <option value="5">5 minutes ago</option>
             <option value="15">15 minutes ago</option>
             <option value="30" selected>30 minutes ago</option>
             <option value="1440">1 day ago</option>
@@ -84,10 +85,48 @@
             <option value="100">100 characters</option>
             <option value="500" selected>500 characters</option>
             <option value="1000">1,000 characters</option>
+            <option value="2000">2,000 characters</option>
+            <option value="3000">3,000 characters</option>
+            <option value="5000">5,000 characters</option>
           </select>
         </span>
         long
       </label>
+
+      <br>
+
+      <label>
+        at least
+        <span class="select-container">
+          <select id="option-images" class="option-select">
+            <option value="0">0 images</option>
+            <option value="1" selected>1 image</option>
+            <option value="2">2 images</option>
+            <option value="3">3 images</option>
+            <option value="5">5 images</option>
+            <option value="10">10 images</option>
+          </select>
+        </span>
+        <span class="spacer">&middot;</span>
+      </label>
+
+      <label>
+        author with at least
+        <span class="select-container">
+          <select id="option-reputation" class="option-select">
+            <option value="0">0 reputation</option>
+            <option value="25" selected>25 reputation</option>
+            <option value="30" selected>30 reputation</option>
+            <option value="35" selected>35 reputation</option>
+            <option value="40" selected>40 reputation</option>
+            <option value="45" selected>45 reputation</option>
+            <option value="50" selected>50 reputation</option>
+            <option value="55" selected>55 reputation</option>
+            <option value="60" selected>60 reputation</option>
+          </select>
+        </span>
+      </label>
+
     </form>
 
     <script id="tag-template" type="text/x-handlebars-template">
@@ -110,6 +149,8 @@
           <h3><a href="https://steemit.com/@{{author}}/{{permlink}}" target="_blank" class="diff-visited">{{title}}</a></h3>
           <div class="stats">
             <a href="https://steemit.com/@{{author}}" target="_blank">@{{author}}</a>
+            <span class="author-reputation">{{author_rep_score}}</span>
+            <span class="category" title="{{tags_string}}">in <strong>{{category}}</strong></span>
             <span class="spacer">&middot;</span>
             {{created}}
             <span class="spacer">&middot;</span>

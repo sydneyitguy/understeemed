@@ -86,6 +86,9 @@ h1 small {
   background-color: rgba(255,255,255,0.3);
   pointer-events: none;
 }
+.option-form .select-container option {
+  background: #68bada;
+}
 
 .option-form select {
   -webkit-appearance: none;
@@ -165,7 +168,20 @@ h1 small {
 .feed .stats {
   margin: 5px 0 10px 0;
 }
-
+.feed .stats .author-reputation {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0 3px;
+  margin-left: 2px;
+  margin-right: 2px;
+  background-color: #f8f8f8;
+  border-radius: 50%;
+  border: 1px solid #dadada;
+  color: #8a8a8a;
+  font-weight: 400;
+  font-family: Source Sans Pro,Helvetica Neue,Helvetica,Arial,sans-serif;
+}
 .feed .body {
   height: 2.4em;
   font-size: 13px;
