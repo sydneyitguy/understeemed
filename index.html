@@ -157,6 +157,10 @@
             {{net_votes}} votes
             <span class="spacer">&middot;</span>
             ${{pending_payout_value}}
+
+            <span class="author-average-payout" style="display:none" title="Author's average payout over the last 10 posts">
+               &rarr; <span class="amount"></span>
+            </span>
           </div>
           <div class="body">{{body}}</div>
         </div>
@@ -181,6 +185,8 @@
     <script src="./js/feed-filter.js"></script>
     <script src="./js/tag-form.js"></script>
     <script>
+      //steem.config.set('websocket', 'wss://ws.golos.io');
+      //steem.config.set('websocket', 'wss://node.steem.ws');
       Account.bind();
       FeedFilter.bind();
       TagForm.bind();
