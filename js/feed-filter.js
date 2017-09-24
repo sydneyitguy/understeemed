@@ -1,5 +1,6 @@
 window.FeedFilter = (function() {
   var KEY_OPTIONS = 'OPTIONS';
+  var MAX_LENGTH = 40;
 
   var $feedCount = $('#feed-count');
   var $feedContainer = $('#feed-container');
@@ -36,7 +37,9 @@ window.FeedFilter = (function() {
   };
 
   var fetchNext = function(tag, permlink, author) {
-    steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': 20, "start_permlink": permlink, "start_author": author }, function(err, result) {
+    var PER_PAGE = 20;
+
+    steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': PER_PAGE, "start_permlink": permlink, "start_author": author }, function(err, result) {
       if (err === null) {
         $('.errors').fadeOut();
 
@@ -86,15 +89,15 @@ window.FeedFilter = (function() {
         $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
           '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
 
-        if (len < 20) {
+        if (len < PER_PAGE) {
           console.log('Results size is less than the limit -> Last page?');
-        } else if (totalCount < 20 && page < 100) {
+        } else if (totalCount < MAX_LENGTH && page < 100) {
           page++;
           // console.log(tag, lastPermlink, lastAuthor);
           fetchNext(tag, lastPermlink, lastAuthor);
         } else {
-          if (totalCount >= 20) {
-            console.log("Finished fetching 20 results, stop.");
+          if (totalCount >= MAX_LENGTH) {
+            console.log('Finished fetching ' + totalCount + ' results, stop.');
           } else {
             console.log("Couldn't find enough matching posts till page 100.");
           }
