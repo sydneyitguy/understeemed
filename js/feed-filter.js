@@ -30,7 +30,7 @@ window.FeedFilter = (function() {
     return diffTimeInMinutes >= options['created'] &&
       discussion.author_rep_score >= options['reputation'] &&
       discussion.net_votes >= options['votes'] &&
-      (discussion.images||[]).length >= options['images'] &&
+      (discussion.images || []).length >= options['images'] &&
       pendingPayoutValue <= options['value'] &&
       discussion.body.length >= options['length'];
   };
@@ -73,7 +73,7 @@ window.FeedFilter = (function() {
               discussion.image_url = discussion.images[0];
             }
             discussion.body = removeMd(discussion.body);
-            discussion.tags_string = (discussion.metadata.tags||[]).join(', ');
+            discussion.tags_string = (discussion.metadata.tags || []).join(', ');
             var $post = $(feedTemplate(discussion));
             $feedContainer.append($post);
             $post.data('duscussion', discussion);
@@ -155,12 +155,12 @@ window.FeedFilter = (function() {
           // Calculate total and average payout for last 10 posts
           posts = posts.slice(0, 10);
           var total_payout = posts.reduce(function(total, post) {
-            return total + parseFloat((post.total_payout_value||'0').split(' ')[0]) + parseFloat((post.pending_payout_value||'0').split(' ')[0]);
+            return total + parseFloat((post.total_payout_value || '0').split(' ')[0]) + parseFloat((post.pending_payout_value || '0').split(' ')[0]);
           }, 0);
           var avg_payout = total_payout / posts.length;
 
           // Write to cache
-          var currency = posts[0].total_payout_value.split(' ')[1]||'';
+          var currency = posts[0].total_payout_value.split(' ')[1] || '';
           cache[author] = "$" + (Math.round(avg_payout*1000)/1000) + ' ' + currency + ' ('+posts.length+' posts)';
 
           // Update DOM
