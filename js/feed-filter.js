@@ -28,12 +28,20 @@ window.FeedFilter = (function() {
     var pendingPayoutValue = parseFloat(discussion.pending_payout_value);
     var diffTimeInMinutes = ((new Date()).getTime() - (new Date(discussion.created)).getTime()) / 60000;
 
-    return diffTimeInMinutes >= options['created'] &&
+    // Check everything that does not require to parse metadata
+    var valid_so_far = diffTimeInMinutes >= options['created'] &&
       discussion.author_rep_score >= options['reputation'] &&
       discussion.net_votes >= options['votes'] &&
-      (discussion.images || []).length >= options['images'] &&
       pendingPayoutValue <= options['value'] &&
       discussion.body.length >= options['length'];
+
+    if (!valid_so_far) {
+      return false;
+    }
+
+    // Check metadata-related filters
+    parseMetadata(discussion);
+    return discussion.images.length >= options['images'];
   };
 
   var fetchNext = function(tag, permlink, author) {
@@ -68,15 +76,10 @@ window.FeedFilter = (function() {
 
           discussion.created = discussion.created + '+00:00';
           discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
-          discussion.metadata = JSON.parse(discussion.json_metadata);
-          discussion.images = discussion.metadata.image;
           if (isUnderValued(discussion)) {
+            parseMetadata(discussion);
             discussion.created = moment(discussion.created).fromNow();
-            if (discussion.images) {
-              discussion.image_url = discussion.images[0];
-            }
             discussion.body = removeMd(discussion.body);
-            discussion.tags_string = (discussion.metadata.tags || []).join(', ');
             var $post = $(feedTemplate(discussion));
             $feedContainer.append($post);
             $post.data('duscussion', discussion);
@@ -178,6 +181,28 @@ window.FeedFilter = (function() {
       });
     }
   }());
+
+  // parse discussion.json_metadata into discussion.metadata and related fields
+  // (unless already done) then return discussion.
+  var parseMetadata = function(discussion) {
+    if (discussion.metadata === undefined) {
+      discussion.metadata = {};
+      discussion.images = [];
+      discussion.image_url = null;
+      discussion.tags = [];
+      discussion.tags_string = '';
+
+      try {
+          discussion.metadata = JSON.parse(discussion.json_metadata) || {};
+          discussion.images = discussion.metadata.image || [];
+          discussion.image_url = discussion.images[0] || null;
+          discussion.tags = discussion.metadata.tags || [];
+          discussion.tags_string = discussion.tags.join(', ');
+      } catch (e) {
+      }
+    }
+    return discussion;
+  };
 
   return {
     fetch: function(tag) {
