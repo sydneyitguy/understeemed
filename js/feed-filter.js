@@ -167,7 +167,7 @@ window.FeedFilter = (function() {
 
           // Write to cache
           var currency = posts[0].total_payout_value.split(' ')[1] || '';
-          cache[author] = "$" + (Math.round(avg_payout*1000)/1000) + ' ' + currency + ' ('+posts.length+' posts)';
+          cache[author] = "$" + (Math.round(avg_payout * 1000) / 1000) + ' ' + currency + ' (' + posts.length + ' posts)';
 
           // Update DOM
           updatePosts(posts_by_author[author], cache[author]);
