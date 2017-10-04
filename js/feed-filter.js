@@ -144,7 +144,7 @@ window.FeedFilter = (function() {
 
         // Fetch last 10 posts of an author from API
         var beforeDate = new Date().toISOString().slice(0, 19); // 2017-01-01T00:00:00
-        steem.api.getDiscussionsByAuthorBeforeDate(author, '', beforeDate, 10, function(err, posts) {
+        steem.api.getDiscussionsByAuthorBeforeDate(author, '', beforeDate, 11, function(err, posts) {
           if (err) {
             cache[author] = '?';
             console.log('Unable to fetch average payout for '+author, err);
@@ -158,22 +158,36 @@ window.FeedFilter = (function() {
             return;
           }
 
-          // Calculate total and average payout for last 10 posts
-          posts = posts.slice(0, 10);
-          var total_payout = posts.reduce(function(total, post) {
-            return total + parseFloat((post.total_payout_value || '0').split(' ')[0]) + parseFloat((post.pending_payout_value || '0').split(' ')[0]);
-          }, 0);
-          var avg_payout = total_payout / posts.length;
+          // Calculate total and average payout for last 11 posts
+          posts = posts.slice(0, 11);
+          var sortedPosts = {};
+          for (var i in posts) {
+            var reward = parseFloat((posts[i].total_payout_value || '0').split(' ')[0]) + parseFloat((posts[i].pending_payout_value || '0').split(' ')[0]);
+            sortedPosts[reward] = posts[i];
+          }
+          sortedPosts = sortObjectByKey(sortedPosts);
+          var keys = Object.keys(sortedPosts);
+          var medianPayout = keys[Math.floor(keys.length / 2)];
+          console.log(medianPayout, sortedPosts);
 
           // Write to cache
           var currency = posts[0].total_payout_value.split(' ')[1] || '';
-          cache[author] = "$" + (Math.round(avg_payout * 1000) / 1000) + ' ' + currency + ' (' + posts.length + ' posts)';
+          cache[author] = "$" + (Math.round(medianPayout * 1000) / 1000) + ' ' + currency + ' (' + posts.length + ' posts)';
 
           // Update DOM
           updatePosts(posts_by_author[author], cache[author]);
         });
       });
     }
+
+     function sortObjectByKey(obj) {
+      return Object.keys(obj).sort(function(a, b) {
+        return a - b;
+      }).reduce(function (result, key) {
+        result[key] = obj[key];
+        return result;
+      }, {});
+    };
 
     function updatePosts(posts, avg_payout) {
       posts.forEach(function($post) {
