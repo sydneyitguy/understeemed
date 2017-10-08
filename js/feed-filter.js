@@ -56,7 +56,7 @@ window.FeedFilter = (function() {
         var len = result.length;
         var lastPermlink = null;
         var lastAuthor = null;
-        var posts_by_author = {};
+        var postsByAuthor = {};
 
         for (i = 0; i < len; i++) {
           var discussion = result[i];
@@ -75,7 +75,7 @@ window.FeedFilter = (function() {
           }
 
           discussion.created = discussion.created + '+00:00';
-          discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation)-9)*9+25);
+          discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation) - 9) * 9 + 25);
           if (isUnderValued(discussion)) {
             parseMetadata(discussion);
             discussion.created = moment(discussion.created).fromNow();
@@ -83,8 +83,8 @@ window.FeedFilter = (function() {
             var $post = $(feedTemplate(discussion));
             $feedContainer.append($post);
             $post.data('duscussion', discussion);
-            posts_by_author[discussion.author] = posts_by_author[discussion.author] || [];
-            posts_by_author[discussion.author].push($post);
+            postsByAuthor[discussion.author] = postsByAuthor[discussion.author] || [];
+            postsByAuthor[discussion.author].push($post);
           }
         }
 
@@ -108,7 +108,7 @@ window.FeedFilter = (function() {
 
         // Fetch average post payout for each user
         // and update DOM once data is ready
-        updateMedianPayout(posts_by_author);
+        updateMedianPayout(postsByAuthor);
 
       } else {
           console.log(err);
@@ -118,9 +118,8 @@ window.FeedFilter = (function() {
   };
 
   /**
-   * updateMedianPayout()
    * Fetch last 10 posts for each author, calculate average payout and update DOM
-   * @param posts_by_author object { author_name: Array of jQuery elements that represent posts }
+   * @param postsByAuthor object { author_name: Array of jQuery elements that represent posts }
    */
   var updateMedianPayout = (function() { "use strict";
 
@@ -128,17 +127,18 @@ window.FeedFilter = (function() {
 
     return updateAll;
 
-    function updateAll(posts_by_author) {
-      var authors = Object.keys(posts_by_author);
+    function updateAll(postsByAuthor) {
+      var authors = Object.keys(postsByAuthor);
       if (!authors.length) {
         return;
       }
 
+      var updatedCount = 0;
       authors.forEach(function(author) {
 
         // Don't ever fetch same author twice. Update DOM right away.
         if (cache[author] !== undefined) {
-          updatePosts(posts_by_author[author], cache[author]);
+          updatePosts(postsByAuthor[author], cache[author]);
           return;
         }
 
@@ -148,13 +148,13 @@ window.FeedFilter = (function() {
           if (err) {
             cache[author] = '?';
             console.log('Unable to fetch average payout for '+author, err);
-            updatePosts(posts_by_author[author], cache[author]);
+            updatePosts(postsByAuthor[author], cache[author]);
             return;
           }
           if (posts.length <= 0) {
             cache[author] = '?';
             console.log('This can not happen: author has no posts '+author);
-            updatePosts(posts_by_author[author], cache[author]);
+            updatePosts(postsByAuthor[author], cache[author]);
             return;
           }
 
@@ -163,24 +163,32 @@ window.FeedFilter = (function() {
           var sortedPosts = {};
           for (var i in posts) {
             var reward = parseFloat((posts[i].total_payout_value || '0').split(' ')[0]) + parseFloat((posts[i].pending_payout_value || '0').split(' ')[0]);
-            sortedPosts[reward] = posts[i];
+            if (sortedPosts[reward]) {
+              sortedPosts[reward + Math.random() * 0.000000001] = posts[i]; // To prevent removing duplicates
+            } else {
+              sortedPosts[reward] = posts[i];
+            }
           }
           sortedPosts = sortObjectByKey(sortedPosts);
           var keys = Object.keys(sortedPosts);
           var medianPayout = keys[Math.floor(keys.length / 2)];
-          console.log(medianPayout, sortedPosts);
+          medianPayout = (Math.round(medianPayout * 1000) / 1000); // 3rd digits below zero
+          // console.log(medianPayout, keys, posts, sortedPosts);
 
           // Write to cache
           var currency = posts[0].total_payout_value.split(' ')[1] || '';
-          cache[author] = "$" + (Math.round(medianPayout * 1000) / 1000) + ' ' + currency + ' (' + posts.length + ' posts)';
+          cache[author] = "$" + medianPayout + ' ' + currency + ' (' + posts.length + ' posts)';
 
           // Update DOM
-          updatePosts(posts_by_author[author], cache[author]);
+          updatePosts(postsByAuthor[author], cache[author]);
         });
       });
     }
 
-     function sortObjectByKey(obj) {
+    /**
+     * Sort object by numeric value of key (ascending)
+     */
+    function sortObjectByKey(obj) {
       return Object.keys(obj).sort(function(a, b) {
         return a - b;
       }).reduce(function (result, key) {
