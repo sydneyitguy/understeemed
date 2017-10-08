@@ -1,6 +1,7 @@
 window.FeedFilter = (function() {
   var KEY_OPTIONS = 'OPTIONS';
   var MAX_LENGTH = 40;
+  var MAX_SEARCH_PAGE = 100;
 
   var $feedCount = $('#feed-count');
   var $feedContainer = $('#feed-container');
@@ -99,7 +100,7 @@ window.FeedFilter = (function() {
         if (len < PER_PAGE) {
           console.log('Results size is less than the limit -> Last page?');
           hasFinished = true;
-        } else if (totalCount < MAX_LENGTH && page < 100) {
+        } else if (totalCount < MAX_LENGTH && page < MAX_SEARCH_PAGE) {
           page++;
           // console.log(tag, lastPermlink, lastAuthor);
           fetchNext(tag, lastPermlink, lastAuthor);
@@ -107,7 +108,7 @@ window.FeedFilter = (function() {
           if (totalCount >= MAX_LENGTH) {
             console.log('Finished fetching ' + totalCount + ' results, stop.');
           } else {
-            console.log("Couldn't find enough matching posts till page 100.");
+            console.log("Couldn't find enough matching posts till page " + MAX_SEARCH_PAGE);
           }
           hasFinished = true;
         }
