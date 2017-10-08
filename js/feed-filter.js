@@ -94,8 +94,6 @@ window.FeedFilter = (function() {
         }
 
         var totalCount = $feedContainer.find('.feed').length;
-        $feedCount.html('Fetched page ' + page + ' <span class="spacer">&middot;</span> ' + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
-          '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
 
         if (len < PER_PAGE) {
           console.log('Results size is less than the limit -> Last page?');
@@ -112,6 +110,13 @@ window.FeedFilter = (function() {
           }
           hasFinished = true;
         }
+
+        var fetchingText = '';
+        if (!hasFinished) {
+          fetchingText = 'Fetching page ' + page + '... ';
+        }
+        $feedCount.html( fetchingText + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
+          '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
 
         // Fetch average post payout for each user
         // and update DOM once data is ready
