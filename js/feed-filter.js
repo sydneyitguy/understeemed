@@ -6,6 +6,7 @@ window.FeedFilter = (function() {
   var $feedContainer = $('#feed-container');
   var feedTemplate = Handlebars.compile($('#feed-template').html());
   var page = 1;
+  var hasFinished = false;
 
   var $optionCreated = $('#option-created');
   var $optionVotes = $('#option-votes');
@@ -13,13 +14,15 @@ window.FeedFilter = (function() {
   var $optionLength = $('#option-length');
   var $optionReputation = $('#option-reputation');
   var $optionImages = $('#option-images');
+  var $optionSort = $('#option-sort');
   var options = {
     created: 30, // minimum minutes since created
     votes: 0, // minimum votes received
     value: 5, // maximum SBD received
     reputation: 0, // minimum author reputation score
     images: 1, // minimum number of images
-    length: 500 // minimum content length
+    length: 500, // minimum content length
+    sort: 'recent'
   };
 
   var permlinks = {}; // To remove duplicates
@@ -46,6 +49,7 @@ window.FeedFilter = (function() {
 
   var fetchNext = function(tag, permlink, author) {
     var PER_PAGE = 20;
+    hasFinished = false;
 
     steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': PER_PAGE, "start_permlink": permlink, "start_author": author }, function(err, result) {
       if (err === null) {
@@ -94,6 +98,7 @@ window.FeedFilter = (function() {
 
         if (len < PER_PAGE) {
           console.log('Results size is less than the limit -> Last page?');
+          hasFinished = true;
         } else if (totalCount < MAX_LENGTH && page < 100) {
           page++;
           // console.log(tag, lastPermlink, lastAuthor);
@@ -104,12 +109,12 @@ window.FeedFilter = (function() {
           } else {
             console.log("Couldn't find enough matching posts till page 100.");
           }
+          hasFinished = true;
         }
 
         // Fetch average post payout for each user
         // and update DOM once data is ready
-        updateMedianPayout(postsByAuthor);
-
+        updateMedianPayout(postsByAuthor, hasFinished);
       } else {
           console.log(err);
           $('.errors').fadeIn();
@@ -127,7 +132,7 @@ window.FeedFilter = (function() {
 
     return updateAll;
 
-    function updateAll(postsByAuthor) {
+    function updateAll(postsByAuthor, hasFinished) {
       var authors = Object.keys(postsByAuthor);
       if (!authors.length) {
         return;
@@ -135,10 +140,10 @@ window.FeedFilter = (function() {
 
       var updatedCount = 0;
       authors.forEach(function(author) {
-
         // Don't ever fetch same author twice. Update DOM right away.
         if (cache[author] !== undefined) {
-          updatePosts(postsByAuthor[author], cache[author]);
+          updatePosts(postsByAuthor[author], cache[author], hasFinished, ++updatedCount === authors.length);
+
           return;
         }
 
@@ -146,15 +151,8 @@ window.FeedFilter = (function() {
         var beforeDate = new Date().toISOString().slice(0, 19); // 2017-01-01T00:00:00
         steem.api.getDiscussionsByAuthorBeforeDate(author, '', beforeDate, 11, function(err, posts) {
           if (err) {
-            cache[author] = '?';
-            console.log('Unable to fetch average payout for '+author, err);
-            updatePosts(postsByAuthor[author], cache[author]);
-            return;
-          }
-          if (posts.length <= 0) {
-            cache[author] = '?';
-            console.log('This can not happen: author has no posts '+author);
-            updatePosts(postsByAuthor[author], cache[author]);
+            console.log('Unable to fetch average payout for ' + author, err);
+            updatePosts(postsByAuthor[author], cache[author], hasFinished, ++updatedCount === authors.length);
             return;
           }
 
@@ -177,10 +175,14 @@ window.FeedFilter = (function() {
 
           // Write to cache
           var currency = posts[0].total_payout_value.split(' ')[1] || '';
-          cache[author] = "$" + medianPayout + ' ' + currency + ' (' + posts.length + ' posts)';
+          cache[author] = {
+            median_payout: medianPayout,
+            currency: currency,
+            post_length: posts.length
+          };
 
           // Update DOM
-          updatePosts(postsByAuthor[author], cache[author]);
+          updatePosts(postsByAuthor[author], cache[author], hasFinished, ++updatedCount === authors.length);
         });
       });
     }
@@ -197,10 +199,29 @@ window.FeedFilter = (function() {
       }, {});
     };
 
-    function updatePosts(posts, avg_payout) {
+    function updatePosts(posts, payoutData, hasFinished, isLastAuthor) {
       posts.forEach(function($post) {
-        $post.find('.author-average-payout').show().find('.amount').text(avg_payout);
+        var payoutText = '?';
+        if (payoutData) {
+          payoutText = '$' + payoutData.median_payout + ' ' + payoutData.currency + ' (' + payoutData.post_length + ' posts)';
+        }
+        $post.find('.author-average-payout').show().find('.amount').text(payoutText);
+        $post.data('medianPayout', payoutData.median_payout);
       });
+
+      if (hasFinished && isLastAuthor) {
+        console.log('Finished updating medianPayouts');
+        if (options['sort'] == 'estimated_reward') {
+          reorderPosts();
+        }
+      }
+    }
+
+    function reorderPosts() {
+      console.log('Reorder posts by median payout values');
+      $feedContainer.find('.feed').sort(function(a, b) {
+          return $(b).data('medianPayout') - $(a).data('medianPayout');
+      }).appendTo($feedContainer);
     }
   }());
 
@@ -250,6 +271,7 @@ window.FeedFilter = (function() {
       $optionLength.val(options['length']);
       $optionReputation.val(options['reputation']);
       $optionImages.val(options['images']);
+      $optionSort.val(options['sort']);
 
       // Options changed
       $('.option-select').change(function() {
@@ -259,7 +281,8 @@ window.FeedFilter = (function() {
           votes: parseInt($optionVotes.val()),
           value: parseInt($optionValue.val()),
           images: parseInt($optionImages.val()),
-          length: parseInt($optionLength.val())
+          length: parseInt($optionLength.val()),
+          sort: $optionSort.val()
         };
         localStorage.setItem(KEY_OPTIONS, JSON.stringify(options), 3650);
 

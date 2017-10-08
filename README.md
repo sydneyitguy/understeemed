@@ -10,4 +10,3 @@ Filters included:
 - Number of images
 - Author's reputation
 
-Sort: the lowest (pending payment / number of votes) goes first
