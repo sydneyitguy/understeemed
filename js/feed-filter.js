@@ -108,7 +108,7 @@ window.FeedFilter = (function() {
 
         // Fetch average post payout for each user
         // and update DOM once data is ready
-        updateAveragePayout(posts_by_author);
+        updateMedianPayout(posts_by_author);
 
       } else {
           console.log(err);
@@ -118,11 +118,11 @@ window.FeedFilter = (function() {
   };
 
   /**
-   * updateAveragePayout()
+   * updateMedianPayout()
    * Fetch last 10 posts for each author, calculate average payout and update DOM
    * @param posts_by_author object { author_name: Array of jQuery elements that represent posts }
    */
-  var updateAveragePayout = (function() { "use strict";
+  var updateMedianPayout = (function() { "use strict";
 
     var cache = {};
 
