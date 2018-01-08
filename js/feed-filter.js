@@ -1,6 +1,6 @@
 window.FeedFilter = (function() {
   var KEY_OPTIONS = 'OPTIONS';
-  var MAX_LENGTH = 40;
+  var MAX_LENGTH = 100;
   var MAX_SEARCH_PAGE = 100;
 
   var $feedCount = $('#feed-count');
@@ -53,78 +53,79 @@ window.FeedFilter = (function() {
     hasFinished = false;
 
     steem.api.getDiscussionsByCreated({ 'tag': tag, 'limit': PER_PAGE, "start_permlink": permlink, "start_author": author }, function(err, result) {
-      if (err === null) {
-        $('.errors').fadeOut();
+      // console.log(err, result);
 
-        // console.log(result);
-
-        var len = result.length;
-        var lastPermlink = null;
-        var lastAuthor = null;
-        var postsByAuthor = {};
-
-        for (i = 0; i < len; i++) {
-          var discussion = result[i];
-          // console.log(i, discussion);
-
-          if (i == len - 1) {
-            lastPermlink = discussion.permlink;
-            lastAuthor = discussion.author;
-          }
-
-          if (permlinks[discussion.id]) {
-            // console.log('already exists');
-            continue;
-          } else {
-            permlinks[discussion.id] = 1;
-          }
-
-          discussion.created = discussion.created + '+00:00';
-          discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation) - 9) * 9 + 25);
-          if (isUnderValued(discussion)) {
-            parseMetadata(discussion);
-            discussion.created = moment(discussion.created).fromNow();
-            discussion.body = removeMd(discussion.body);
-            var $post = $(feedTemplate(discussion));
-            $feedContainer.append($post);
-            $post.data('duscussion', discussion);
-            postsByAuthor[discussion.author] = postsByAuthor[discussion.author] || [];
-            postsByAuthor[discussion.author].push($post);
-          }
-        }
-
-        var totalCount = $feedContainer.find('.feed').length;
-
-        if (len < PER_PAGE) {
-          console.log('Results size is less than the limit -> Last page?');
-          hasFinished = true;
-        } else if (totalCount < MAX_LENGTH && page < MAX_SEARCH_PAGE) {
-          page++;
-          // console.log(tag, lastPermlink, lastAuthor);
-          fetchNext(tag, lastPermlink, lastAuthor);
-        } else {
-          if (totalCount >= MAX_LENGTH) {
-            console.log('Finished fetching ' + totalCount + ' results, stop.');
-          } else {
-            console.log("Couldn't find enough matching posts till page " + MAX_SEARCH_PAGE);
-          }
-          hasFinished = true;
-        }
-
-        var fetchingText = '';
-        if (!hasFinished) {
-          fetchingText = 'Fetching page ' + page + '... ';
-        }
-        $feedCount.html( fetchingText + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
-          '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
-
-        // Fetch average post payout for each user
-        // and update DOM once data is ready
-        updateMedianPayout(postsByAuthor, hasFinished);
-      } else {
-          console.log(err);
-          $('.errors').fadeIn();
+      if (err) {
+        console.log(err);
+        $('.errors').fadeIn();
+        return;
       }
+
+      $('.errors').fadeOut();
+
+      var len = result.length;
+      var lastPermlink = null;
+      var lastAuthor = null;
+      var postsByAuthor = {};
+
+      for (i = 0; i < len; i++) {
+        var discussion = result[i];
+        // console.log(i, discussion);
+
+        if (i == len - 1) {
+          lastPermlink = discussion.permlink;
+          lastAuthor = discussion.author;
+        }
+
+        if (permlinks[discussion.id]) {
+          // console.log('already exists');
+          continue;
+        } else {
+          permlinks[discussion.id] = 1;
+        }
+
+        discussion.created = discussion.created + '+00:00';
+        discussion.author_rep_score = Math.floor((Math.log10(discussion.author_reputation) - 9) * 9 + 25);
+        if (isUnderValued(discussion)) {
+          parseMetadata(discussion);
+          discussion.created = moment(discussion.created).fromNow();
+          discussion.body = removeMd(discussion.body);
+          var $post = $(feedTemplate(discussion));
+          $feedContainer.append($post);
+          $post.data('duscussion', discussion);
+          postsByAuthor[discussion.author] = postsByAuthor[discussion.author] || [];
+          postsByAuthor[discussion.author].push($post);
+        }
+      }
+
+      var totalCount = $feedContainer.find('.feed').length;
+
+      if (len < PER_PAGE) {
+        console.log('Results size is less than the limit -> Last page?');
+        hasFinished = true;
+      } else if (totalCount < MAX_LENGTH && page < MAX_SEARCH_PAGE) {
+        page++;
+        // console.log(tag, lastPermlink, lastAuthor);
+        fetchNext(tag, lastPermlink, lastAuthor);
+      } else {
+        if (totalCount >= MAX_LENGTH) {
+          console.log('Finished fetching ' + totalCount + ' results, stop.');
+        } else {
+          console.log("Couldn't find enough matching posts till page " + MAX_SEARCH_PAGE);
+        }
+        hasFinished = true;
+      }
+
+      var fetchingText = '';
+      if (!hasFinished) {
+        fetchingText = 'Fetching page ' + page + '... ';
+      }
+      $feedCount.html( fetchingText + totalCount + ' articles in total <span class="spacer">&middot;</span> ' +
+        '<a href="https://steemit.com/trending/' + tag + '" target="_blank">trending</a>');
+
+      // Fetch average post payout for each user
+      // and update DOM once data is ready
+      updateMedianPayout(postsByAuthor, hasFinished);
     });
   };
 
